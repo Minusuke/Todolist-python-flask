@@ -1,70 +1,35 @@
-
-import os
-from flask import Flask, request, jsonify, url_for
-from flask_cors import CORS
-from utils import APIException, generate_sitemap
-from datastructures import FamilyStructure
-
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
-app.url_map.strict_slashes = False
-CORS(app)
 
+todos = [
+    {"label": "My first task", "done": False},
+]
 
-jackson_family = FamilyStructure("Jackson")
+# GET TODOS
 
+@app.route('/todos', methods=['GET'])
+def hello_world():
+    text_json = jsonify(todos)
+    return text_json
 
+# POST TODOS
 
+@app.route('/todos', methods=['POST'])
+def add_new_todo():
+    request_body = request.json
+    todos.append(request_body)
+    text_json = jsonify(todos)
+    return text_json
 
-@app.errorhandler(APIException)
-def handle_invalid_usage(error):
-    return jsonify(error.to_dict()), error.status_code
+# DELETE TODOS
 
-
-
-
-@app.route('/')
-def sitemap():
-    return generate_sitemap(app)
-
-
-@app.route('/members', methods=['GET'])
-def handle_hello():
-
-   
-    members = jackson_family.get_all_members()
-    members = list(map(lambda member: member, members))
-
-    return jsonify(members), 200
-
-
-@app.route('/member/<int:member_id>', methods=['GET'])
-def get_member(member_id):
-    member = jackson_family.get_member(member_id)
-    if member:
-        return jsonify(member), 200
-    else:
-        return jsonify({"error": "Member not found"}), 404
-
-
-
-@app.route('/member', methods=['POST'])
-def add_member():
-    data = request.get_json()
-    jackson_family.add_member(data)
-    return jsonify({}), 200
-
-
-
-@app.route('/member/<int:member_id>', methods=['DELETE'])
-def delete_member(member_id):
-    if jackson_family.delete_member(member_id):
-        return jsonify({"done": True}), 200
-    else:
-        return jsonify({"error": "Member not found"}), 404
-
+@app.route('/todos/<int:position>', methods=['DELETE'])
+def delete_todo(position):
+    todos.pop(position-1)
+    text_json = jsonify(todos)
+    return text_json 
 
 
 if __name__ == '__main__':
-    PORT = int(os.environ.get('PORT', 3000))
-    app.run(host='0.0.0.0', port=PORT, debug=True)
+    app.run(host='0.0.0.0', port=3245, debug=True)
